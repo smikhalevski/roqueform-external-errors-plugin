@@ -1,0 +1,22 @@
+{
+  "name": "roqueform-server-errors-plugin",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "excludeInternal": true,
+  "disableSources": true,
+  "hideGenerator": true,
+  "readme": "none",
+  "tsconfig": "./tsconfig.json",
+  "customCss": "./node_modules/typedoc-custom-css/custom.css",
+  "entryPoints": [
+    "./src/main/index.ts"
+  ],
+  "externalSymbolLinkMappings": {
+    "roqueform": {
+      "errorsPlugin": "https://smikhalevski.github.io/roqueform/functions/roqueform.errorsPlugin-1.html",
+      "PluginInjector": "https://smikhalevski.github.io/roqueform/types/roqueform.PluginInjector.html",
+      "Field": "https://smikhalevski.github.io/roqueform/types/roqueform.Field.html"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "name": "roqueform-server-errors-plugin",
+  "version": "1.0.0",
+  "description": "Associates server errors with Roqueform fields.",
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup --config && cp package.json README.md LICENSE.txt lib/ && cd lib && npm pkg delete scripts devDependencies",
+    "clean": "rimraf lib docs coverage",
+    "test": "jest",
+    "perf": "toofast",
+    "docs": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smikhalevski/roqueform-server-errors-plugin.git"
+  },
+  "keywords": [
+    "roqueform",
+    "form",
+    "field",
+    "plugin",
+    "error"
+  ],
+  "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/smikhalevski/roqueform-server-errors-plugin/issues"
+  },
+  "homepage": "https://github.com/smikhalevski/roqueform-server-errors-plugin#readme",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.13.1",
+    "ts-jest": "^29.1.2",
+    "tslib": "^2.6.2",
+    "typedoc": "^0.25.12",
+    "typedoc-custom-css": "github:smikhalevski/typedoc-custom-css#master",
+    "typescript": "^5.4.3"
+  },
+  "peerDependencies": {
+    "roqueform": "^5.1.1"
+  }
+}
