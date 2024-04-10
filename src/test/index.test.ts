@@ -19,8 +19,7 @@ describe('serverErrorsPlugin', () => {
 
     field.on('*', subscriberMock);
 
-    field.setServerErrors([error]);
-
+    expect(field.setServerErrors([error])).toBe(true);
     expect(field.errors.length).toBe(1);
     expect(field.errors[0]).toBe(error);
     expect(subscriberMock).toHaveBeenCalledTimes(1);
@@ -101,12 +100,18 @@ describe('serverErrorsPlugin', () => {
   test('ignores unadopted fields', () => {
     const associatorMock = jest.fn();
     const field = createField({ aaa: 111 }, serverErrorsPlugin(undefined, associatorMock));
+    const errors = [{ code: 'xxx' }, { code: 'yyy' }];
 
     field.at('aaa').serverErrorAdopters = [error => (error.code === 'xxx' ? error : undefined)];
 
-    field.setServerErrors([{ code: 'xxx' }, { code: 'yyy' }], { recursive: true, ignoreUnadopted: true });
-
+    expect(field.setServerErrors(errors, { recursive: true, ignoreUnadopted: true })).toBe(true);
     expect(associatorMock).toHaveBeenCalledTimes(1);
     expect(associatorMock).toHaveBeenNthCalledWith(1, field.at('aaa'), { code: 'xxx' });
+  });
+
+  test('returns false if no errors were not associated', () => {
+    const field = createField({ aaa: 111 }, composePlugins(errorsPlugin(), serverErrorsPlugin()));
+
+    expect(field.setServerErrors([{ code: 'xxx' }], { ignoreUnadopted: true })).toBe(false);
   });
 });

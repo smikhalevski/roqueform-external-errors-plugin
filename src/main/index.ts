@@ -51,6 +51,7 @@ export interface ServerErrorsPlugin<ServerError, ClientError> {
  * errors aren't converted.
  * @param errorAssociator Associates an error with the field. By default, expects that field is enhanced by the
  * {@link roqueform!errorsPlugin errorsPlugin}.
+ * @returns `true` if any of given errors were associated with fields, or `false` otherwise.
  * @template ServerError The error received from the server.
  * @template ClientError The error associated with the field.
  */
@@ -63,7 +64,7 @@ export function serverErrorsPlugin<ServerError = any, ClientError = ServerError>
 
     field.setServerErrors = (serverErrors, options) => {
       if (serverErrors === null || serverErrors === undefined || serverErrors.length === 0) {
-        return;
+        return false;
       }
 
       const adoptedServerErrors = adoptServerErrors(
@@ -74,8 +75,8 @@ export function serverErrorsPlugin<ServerError = any, ClientError = ServerError>
         []
       );
 
-      if (adoptedServerErrors.length === serverErrors.length || (options !== undefined && options.ignoreUnadopted)) {
-        return;
+      if (serverErrors.length === adoptedServerErrors.length || (options !== undefined && options.ignoreUnadopted)) {
+        return adoptedServerErrors.length !== 0;
       }
 
       for (const serverError of serverErrors) {
@@ -83,6 +84,7 @@ export function serverErrorsPlugin<ServerError = any, ClientError = ServerError>
           errorAssociator(field, errorConverter(serverError));
         }
       }
+      return true;
     };
   };
 }

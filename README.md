@@ -8,7 +8,7 @@ npm install --save-prod roqueform roqueform-server-errors-plugin
 
 🔎 [Check out the API Docs](https://smikhalevski.github.io/roqueform-server-errors-plugin)
 
-# How to use?
+# Overview
 
 Import and enable the plugin:
 
@@ -44,8 +44,8 @@ const serverErrors = [{ code: 'fictionalPlanet' }];
 
 field.setServerErrors(serverErrors, { recursive: true });
 
-field.at('planet').errors[0]
-// ⮕ { message: 'Must be a real planet' }
+field.at('planet').errors
+// ⮕ [{ message: 'Must be a real planet' }]
 
 field.at('planet').isInvalid
 // ⮕ true
