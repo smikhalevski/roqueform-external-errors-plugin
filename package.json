@@ -1,7 +1,7 @@
 {
-  "name": "roqueform-server-errors-plugin",
-  "version": "1.0.0",
-  "description": "Associates server errors with Roqueform fields.",
+  "name": "roqueform-external-errors-plugin",
+  "version": "0.0.1",
+  "description": "The plugin that associates external errors with Roqueform fields using adopters.",
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/smikhalevski/roqueform-server-errors-plugin.git"
+    "url": "git+https://github.com/smikhalevski/roqueform-external-errors-plugin.git"
   },
   "keywords": [
     "roqueform",
@@ -35,9 +35,9 @@
   "author": "Savva Mikhalevski <smikhalevski@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/smikhalevski/roqueform-server-errors-plugin/issues"
+    "url": "https://github.com/smikhalevski/roqueform-external-errors-plugin/issues"
   },
-  "homepage": "https://github.com/smikhalevski/roqueform-server-errors-plugin#readme",
+  "homepage": "https://github.com/smikhalevski/roqueform-external-errors-plugin#readme",
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/jest": "^29.5.12",

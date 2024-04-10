@@ -1,90 +1,127 @@
 import type { ErrorsPlugin, Field, PluginInjector } from 'roqueform';
 
 /**
- * Options of the {@link ServerErrorsPlugin.setServerErrors} method.
+ * The plugin that associates external errors with fields using adopters.
+ *
+ * @template ExternalError The external error that can be adopted by the field.
+ * @template Error The error that is associated with the field.
  */
-export interface SetServerErrorsOptions {
+export interface ExternalErrorsPlugin<ExternalError, Error> {
   /**
-   * If `true` then errors are checked against {@link ServerErrorsPlugin.serverErrorAdopters} and added to both this
-   * field and of its descendant fields.
+   * An array of callbacks that receive an external error and return an error that must be associated with the field,
+   * or `undefined` if the external error must not be associated with the field.
+   */
+  externalErrorAdopters: Array<(externalError: ExternalError) => Error | undefined | void>;
+
+  /**
+   * Sets external errors to the field and its descendants.
+   *
+   * @param externalErrors The external errors to adopt.
+   * @param options Additional options.
+   * @returns An array of adopted external errors.
+   */
+  adoptExternalErrors(
+    externalErrors: ExternalError[] | null | undefined,
+    options?: AdoptExternalErrorsOptions
+  ): ExternalError[];
+}
+
+/**
+ * Options of the {@link ExternalErrorsPlugin.adoptExternalErrors} method.
+ */
+export interface AdoptExternalErrorsOptions {
+  /**
+   * If `true` then external errors are adopted by both this field and all of its descendant fields.
    *
    * @default false
    */
   recursive?: boolean;
 
   /**
-   * If `true` then only server errors that were adopted by {@link ServerErrorsPlugin.serverErrorAdopters} are
-   * associated with the field. Otherwise, errors for which all adopters returned `undefined` are added to the field
-   * where {@link ServerErrorsPlugin.setServerErrors} was called.
+   * If `false` then {@link ExternalErrorsPluginOptions.fallbackErrorAdopter fallbackErrorAdopter} is used to adopt
+   * errors that were not adopted by {@link ExternalErrorsPlugin.externalErrorAdopters externalErrorAdopters}.
+   * Otherwise, such errors are ignored.
    *
    * @default false
    */
   ignoreUnadopted?: boolean;
 }
 
-/**
- * The plugin that associates errors with fields using adopters.
- *
- * @template ServerError The error received from the server.
- * @template ClientError The error associated with the field.
- */
-export interface ServerErrorsPlugin<ServerError, ClientError> {
+export interface ExternalErrorsPluginOptions<ExternalError, Error> {
   /**
-   * An array of callbacks that receive a server error and return an error that must be associated with the field, or
-   * `undefined` if the server error isn't associated with the field.
+   * Unadopted external errors (those which were not adopted by
+   * {@link ExternalErrorsPlugin.externalErrorAdopters externalErrorAdopters}) are adopted by
+   * {@link fallbackErrorAdopter} and associated with the field where
+   * {@link ExternalErrorsPlugin.adoptExternalErrors adoptExternalErrors} was called.
+   *
+   * @param externalError The external error to adopt.
    */
-  serverErrorAdopters: Array<(serverError: ServerError) => ClientError | undefined | void>;
+  fallbackErrorAdopter?: (externalError: ExternalError) => Error | undefined | void;
 
   /**
-   * Sets server errors to the field and its descendants.
+   * Associates an error with the field.
    *
-   * @param serverErrors The server errors to set.
-   * @param options Additional options.
+   * By default, {@link roqueform!ErrorsPlugin.addError ErrorsPlugin.addError} is used.
+   *
+   * @param field The field with which an error must be associated.
+   * @param error An error to associate with the field.
    */
-  setServerErrors(serverErrors: ServerError[] | null | undefined, options?: SetServerErrorsOptions): void;
+  errorAssociator?: (field: Field, error: Error) => void;
 }
 
 /**
- * Enhances fields with methods that manage server errors.
+ * The plugin that associates external errors with fields using adopters.
  *
- * @param errorConverter Converts a server error to a client error that would be associated with the field. By default,
- * errors aren't converted.
- * @param errorAssociator Associates an error with the field. By default, expects that field is enhanced by the
- * {@link roqueform!errorsPlugin errorsPlugin}.
- * @returns `true` if any of given errors were associated with fields, or `false` otherwise.
- * @template ServerError The error received from the server.
- * @template ClientError The error associated with the field.
+ * @template ExternalError The external error that can be adopted by the field.
+ * @template Error The error that is associated with the field.
  */
-export function serverErrorsPlugin<ServerError = any, ClientError = ServerError>(
-  errorConverter: (error: ServerError) => ClientError = identityConverter,
-  errorAssociator: (field: Field, error: ClientError) => void = errorsPluginAssociator
-): PluginInjector<ServerErrorsPlugin<ServerError, ClientError>> {
-  return field => {
-    field.serverErrorAdopters = [];
+export function externalErrorsPlugin<ExternalError = any, Error = ExternalError>(
+  options: ExternalErrorsPluginOptions<ExternalError, Error> = {}
+): PluginInjector<ExternalErrorsPlugin<ExternalError, Error>> {
+  const { fallbackErrorAdopter, errorAssociator = defaultErrorAssociator } = options;
 
-    field.setServerErrors = (serverErrors, options) => {
-      if (serverErrors === null || serverErrors === undefined || serverErrors.length === 0) {
-        return false;
+  return field => {
+    field.externalErrorAdopters = [];
+
+    field.adoptExternalErrors = (externalErrors, options) => {
+      if (externalErrors === null || externalErrors === undefined || externalErrors.length === 0) {
+        return [];
       }
 
-      const adoptedServerErrors = adoptServerErrors(
+      const adoptedErrors = adoptErrors(
         field,
-        serverErrors,
+        externalErrors,
         errorAssociator,
         options !== undefined && options.recursive,
         []
       );
 
-      if (serverErrors.length === adoptedServerErrors.length || (options !== undefined && options.ignoreUnadopted)) {
-        return adoptedServerErrors.length !== 0;
+      if (
+        fallbackErrorAdopter === undefined ||
+        externalErrors.length === adoptedErrors.length ||
+        (options !== undefined && options.ignoreUnadopted)
+      ) {
+        return adoptedErrors;
       }
 
-      for (const serverError of serverErrors) {
-        if (!adoptedServerErrors.includes(serverError)) {
-          errorAssociator(field, errorConverter(serverError));
+      for (const externalError of externalErrors) {
+        if (adoptedErrors.includes(externalError)) {
+          // Already adopted
+          continue;
         }
+
+        const error = fallbackErrorAdopter(externalError);
+
+        if (error === undefined) {
+          // Cannot be adopted
+          continue;
+        }
+
+        errorAssociator(field, error);
+        adoptedErrors.push(externalError);
       }
-      return true;
+
+      return adoptedErrors;
     };
   };
 }
@@ -92,43 +129,40 @@ export function serverErrorsPlugin<ServerError = any, ClientError = ServerError>
 /**
  * Returns the array of errors that were adopted by fields.
  */
-function adoptServerErrors<ServerError, ClientError>(
-  field: Field<unknown, ServerErrorsPlugin<ServerError, ClientError>>,
-  serverErrors: ServerError[],
-  errorAssociator: (field: Field, error: ClientError) => void,
+function adoptErrors<ExternalError, Error>(
+  field: Field<unknown, ExternalErrorsPlugin<ExternalError, Error>>,
+  externalErrors: ExternalError[],
+  errorAssociator: (field: Field, error: Error) => void,
   recursive: boolean | undefined,
-  adoptedServerErrors: ServerError[]
-): ServerError[] {
-  if (field.serverErrorAdopters.length !== 0) {
-    serverErrors: for (const serverError of serverErrors) {
-      for (const adopter of field.serverErrorAdopters) {
-        const error = adopter(serverError);
+  adoptedErrors: ExternalError[]
+): ExternalError[] {
+  if (field.externalErrorAdopters.length !== 0) {
+    externalErrors: for (const externalError of externalErrors) {
+      for (const errorAdopter of field.externalErrorAdopters) {
+        const error = errorAdopter(externalError);
 
         if (error === undefined) {
+          // Cannot be adopted
           continue;
         }
 
         errorAssociator(field, error);
-        adoptedServerErrors.push(serverError);
-        continue serverErrors;
+        adoptedErrors.push(externalError);
+        continue externalErrors;
       }
     }
   }
 
   if (field.children !== null && recursive) {
     for (const child of field.children) {
-      adoptServerErrors(child, serverErrors, errorAssociator, true, adoptedServerErrors);
+      adoptErrors(child, externalErrors, errorAssociator, true, adoptedErrors);
     }
   }
 
-  return adoptedServerErrors;
+  return adoptedErrors;
 }
 
-function identityConverter(error: any): any {
-  return error;
-}
-
-function errorsPluginAssociator(field: Field, error: unknown): void {
+function defaultErrorAssociator(field: Field, error: unknown): void {
   const { addError } = field as Field<unknown, ErrorsPlugin>;
 
   if (typeof addError !== 'function') {

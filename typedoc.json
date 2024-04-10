@@ -1,5 +1,5 @@
 {
-  "name": "roqueform-server-errors-plugin",
+  "name": "roqueform-external-errors-plugin",
   "includeVersion": true,
   "excludePrivate": true,
   "excludeExternals": true,
@@ -14,7 +14,7 @@
   ],
   "externalSymbolLinkMappings": {
     "roqueform": {
-      "errorsPlugin": "https://smikhalevski.github.io/roqueform/functions/roqueform.errorsPlugin-1.html",
+      "ErrorsPlugin.addError": "https://smikhalevski.github.io/roqueform/interfaces/roqueform.ErrorsPlugin.html#addError",
       "PluginInjector": "https://smikhalevski.github.io/roqueform/types/roqueform.PluginInjector.html",
       "Field": "https://smikhalevski.github.io/roqueform/types/roqueform.Field.html"
     }

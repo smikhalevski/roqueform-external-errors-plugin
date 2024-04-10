@@ -1,12 +1,13 @@
-# roqueform-server-errors-plugin
+# roqueform-external-errors-plugin
 
-Associates server errors with [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields.
+The plugin that associates external errors with [Roqueform](https://github.com/smikhalevski/roqueform#readme) fields
+using adopters.
 
 ```shell
-npm install --save-prod roqueform roqueform-server-errors-plugin
+npm install --save-prod roqueform roqueform-external-errors-plugin
 ```
 
-🔎 [Check out the API Docs](https://smikhalevski.github.io/roqueform-server-errors-plugin)
+🔎 [Check out the API Docs](https://smikhalevski.github.io/roqueform-external-errors-plugin)
 
 # Overview
 
@@ -14,21 +15,21 @@ Import and enable the plugin:
 
 ```ts
 import { composePlugins, createField, errorsPlugin } from 'roqueform';
-import { serverErrorsPlugin } from 'roqueform-server-errors-plugin';
+import { externalErrorsPlugin } from 'roqueform-external-errors-plugin';
 
 const field = createField(
   { planet: 'Alderaan' },
   composePlugins(
     errorsPlugin(),
-    serverErrorsPlugin()
+    externalErrorsPlugin()
   )
 );
 ```
 
-Declare how fields would adopt server errors:
+Declare how fields would adopt external errors:
 
 ```ts
-field.at('planet').serverErrorAdopters = [
+field.at('planet').externalErrorAdopters = [
   error => {
     if (error.code === 'fictionalPlanet') {
       return { message: 'Must be a real planet' };
@@ -37,12 +38,12 @@ field.at('planet').serverErrorAdopters = [
 ];
 ```
 
-Set server errors to fields:
+Let fields adopt external errors:
 
 ```ts
-const serverErrors = [{ code: 'fictionalPlanet' }];
+const externalErrors = [{ code: 'fictionalPlanet' }];
 
-field.setServerErrors(serverErrors, { recursive: true });
+field.adoptExternalErrors(externalErrors, { recursive: true });
 
 field.at('planet').errors
 // ⮕ [{ message: 'Must be a real planet' }]
