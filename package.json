@@ -1,6 +1,6 @@
 {
   "name": "roqueform-external-errors-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The plugin that associates external errors with Roqueform fields using adopters.",
   "main": "./index.js",
   "module": "./index.mjs",
