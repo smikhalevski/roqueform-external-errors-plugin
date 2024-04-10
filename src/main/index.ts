@@ -22,14 +22,14 @@ export interface ExternalErrorsPlugin<ExternalError, Error> {
    */
   adoptExternalErrors(
     externalErrors: ExternalError[] | null | undefined,
-    options?: AdoptExternalErrorsOptions
+    options?: AdoptExternalErrorsOptions<ExternalError, Error>
   ): ExternalError[];
 }
 
 /**
  * Options of the {@link ExternalErrorsPlugin.adoptExternalErrors} method.
  */
-export interface AdoptExternalErrorsOptions {
+export interface AdoptExternalErrorsOptions<ExternalError, Error> {
   /**
    * If `true` then external errors are adopted by both this field and all of its descendant fields.
    *
@@ -38,48 +38,24 @@ export interface AdoptExternalErrorsOptions {
   recursive?: boolean;
 
   /**
-   * If `false` then {@link ExternalErrorsPluginOptions.fallbackErrorAdopter fallbackErrorAdopter} is used to adopt
-   * errors that were not adopted by {@link ExternalErrorsPlugin.externalErrorAdopters externalErrorAdopters}.
-   * Otherwise, such errors are ignored.
-   *
-   * @default false
-   */
-  ignoreUnadopted?: boolean;
-}
-
-export interface ExternalErrorsPluginOptions<ExternalError, Error> {
-  /**
-   * Unadopted external errors (those which were not adopted by
-   * {@link ExternalErrorsPlugin.externalErrorAdopters externalErrorAdopters}) are adopted by
-   * {@link fallbackErrorAdopter} and associated with the field where
-   * {@link ExternalErrorsPlugin.adoptExternalErrors adoptExternalErrors} was called.
+   * Adopts errors that were not adopted by any field.
    *
    * @param externalError The external error to adopt.
    */
-  fallbackErrorAdopter?: (externalError: ExternalError) => Error | undefined | void;
-
-  /**
-   * Associates an error with the field.
-   *
-   * By default, {@link roqueform!ErrorsPlugin.addError ErrorsPlugin.addError} is used.
-   *
-   * @param field The field with which an error must be associated.
-   * @param error An error to associate with the field.
-   */
-  errorAssociator?: (field: Field, error: Error) => void;
+  fallbackAdopter?: (externalError: ExternalError) => Error | undefined | void;
 }
 
 /**
  * The plugin that associates external errors with fields using adopters.
  *
+ * @param errorAssociator Associates an error with the field. By default,
+ * {@link roqueform!ErrorsPlugin.addError ErrorsPlugin.addError} is used.
  * @template ExternalError The external error that can be adopted by the field.
  * @template Error The error that is associated with the field.
  */
 export function externalErrorsPlugin<ExternalError = any, Error = ExternalError>(
-  options: ExternalErrorsPluginOptions<ExternalError, Error> = {}
+  errorAssociator: (field: Field, error: Error) => void = defaultErrorAssociator
 ): PluginInjector<ExternalErrorsPlugin<ExternalError, Error>> {
-  const { fallbackErrorAdopter, errorAssociator = defaultErrorAssociator } = options;
-
   return field => {
     field.externalErrorAdopters = [];
 
@@ -96,11 +72,9 @@ export function externalErrorsPlugin<ExternalError = any, Error = ExternalError>
         []
       );
 
-      if (
-        fallbackErrorAdopter === undefined ||
-        externalErrors.length === adoptedErrors.length ||
-        (options !== undefined && options.ignoreUnadopted)
-      ) {
+      const fallbackErrorAdopter = options && options.fallbackAdopter;
+
+      if (fallbackErrorAdopter === undefined || externalErrors.length === adoptedErrors.length) {
         return adoptedErrors;
       }
 
